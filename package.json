@@ -4,6 +4,7 @@
   "description": "Interop layer for consuming React components with other JavaScript libraries",
   "main": "lib/index.js",
   "scripts": {
+    "build": "babel src --out-dir lib",
     "test": "jest"
   },
   "repository": {
