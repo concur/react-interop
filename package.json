@@ -2,9 +2,9 @@
   "name": "react-interop",
   "version": "0.1.0",
   "description": "Interop layer for consuming React components with other JavaScript libraries",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -22,5 +22,16 @@
   "bugs": {
     "url": "https://github.com/concur/react-interop/issues"
   },
-  "homepage": "https://github.com/concur/react-interop#readme"
+  "homepage": "https://github.com/concur/react-interop#readme",
+  "dependencies": {
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-jest": "^20.0.3",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "jest": "^20.0.4"
+  }
 }
