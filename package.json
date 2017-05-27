@@ -1,0 +1,26 @@
+{
+  "name": "react-interop",
+  "version": "0.1.0",
+  "description": "Interop layer for consuming React components with other JavaScript libraries",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/concur/react-interop.git"
+  },
+  "keywords": [
+    "react",
+    "component",
+    "render",
+    "javascript",
+    "interop"
+  ],
+  "author": "Jeff Handley",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/concur/react-interop/issues"
+  },
+  "homepage": "https://github.com/concur/react-interop#readme"
+}
