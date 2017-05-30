@@ -27,7 +27,7 @@ function wrapComponent(Component, Container, containerProps) {
 
         render(props, container) {
             if (typeof container === 'string') {
-                contaner = document.getElementById(container);
+                container = document.getElementById(container);
             }
 
             ReactDOM.render(this.createElement(props), container);

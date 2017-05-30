@@ -1,6 +1,8 @@
 import {exportComponents} from '../src';
 import React from 'react';
 
+/* eslint-disable react/no-multi-comp, react/prop-types */
+
 describe('exportComponents', () => {
     test('exports an empty object by default', () => {
         const actual = exportComponents();
@@ -20,7 +22,7 @@ describe('exportComponents', () => {
             expect(actual).toEqual(['Bar', 'Foo']);
         });
 
-        const { Bar, Foo } = exported;
+        const { Foo } = exported;
 
         test('with a createElement function', () => {
             const createElement = Foo.createElement;
@@ -95,7 +97,7 @@ describe('exported', () => {
         describe('renderToStaticMarkup', () => {
             test('renders the component into the Container', () => {
                 const markup = exported.NameComponent.renderToStaticMarkup({name: 'inContainer'});
-                expect(markup).toEqual(`<div id="container-component"><span id="container-name">TheContainer</span><span id="name-component">inContainer</span></div>`);
+                expect(markup).toEqual('<div id="container-component"><span id="container-name">TheContainer</span><span id="name-component">inContainer</span></div>');
             });
         });
     });

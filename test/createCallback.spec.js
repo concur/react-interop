@@ -97,8 +97,8 @@ test('supports removing a subscription within a subscription', () => {
 
     callback.subscribe(listenerA);
     const unSubB = callback.subscribe(() => {
-      listenerB();
-      unSubB();
+        listenerB();
+        unSubB();
     });
     callback.subscribe(listenerC);
 
@@ -124,8 +124,8 @@ test('delays unsubscribe until the end of current dispatch', () => {
 
     unsubscribeHandles.push(callback.subscribe(() => listener1()));
     unsubscribeHandles.push(callback.subscribe(() => {
-      listener2();
-      doUnsubscribeAll();
+        listener2();
+        doUnsubscribeAll();
     }));
     unsubscribeHandles.push(callback.subscribe(() => listener3()));
 
@@ -149,16 +149,16 @@ test('delays subscribe until the end of current dispatch', () => {
 
     let listener3Added = false;
     const maybeAddThirdListener = () => {
-      if (!listener3Added) {
-        listener3Added = true;
-        callback.subscribe(() => listener3());
-      };
+        if (!listener3Added) {
+            listener3Added = true;
+            callback.subscribe(() => listener3());
+        }
     };
 
     callback.subscribe(() => listener1());
     callback.subscribe(() => {
-      listener2();
-      maybeAddThirdListener();
+        listener2();
+        maybeAddThirdListener();
     });
 
     callback.dispatch();
@@ -182,20 +182,20 @@ test('uses the last snapshot of subscribers during nested dispatch', () => {
 
     let unsubscribe4;
     const unsubscribe1 = callback.subscribe(() => {
-      listener1();
-      expect(listener1.mock.calls.length).toBe(1);
-      expect(listener2.mock.calls.length).toBe(0);
-      expect(listener3.mock.calls.length).toBe(0);
-      expect(listener4.mock.calls.length).toBe(0);
+        listener1();
+        expect(listener1.mock.calls.length).toBe(1);
+        expect(listener2.mock.calls.length).toBe(0);
+        expect(listener3.mock.calls.length).toBe(0);
+        expect(listener4.mock.calls.length).toBe(0);
 
-      unsubscribe1();
-      unsubscribe4 = callback.subscribe(listener4);
-      callback.dispatch();
+        unsubscribe1();
+        unsubscribe4 = callback.subscribe(listener4);
+        callback.dispatch();
 
-      expect(listener1.mock.calls.length).toBe(1);
-      expect(listener2.mock.calls.length).toBe(1);
-      expect(listener3.mock.calls.length).toBe(1);
-      expect(listener4.mock.calls.length).toBe(1);
+        expect(listener1.mock.calls.length).toBe(1);
+        expect(listener2.mock.calls.length).toBe(1);
+        expect(listener3.mock.calls.length).toBe(1);
+        expect(listener4.mock.calls.length).toBe(1);
     });
     callback.subscribe(listener2);
     callback.subscribe(listener3);
@@ -217,22 +217,22 @@ test('uses the last snapshot of subscribers during nested dispatch', () => {
 test('provides the dispatch params to the subscribers', done => {
     const callback = createCallback();
     callback.subscribe((...params) => {
-      expect(params).toEqual([
-        {
-          id: 1,
-          text: 'Hello'
-        }
-      ]);
-      done();
+        expect(params).toEqual([
+            {
+                id: 1,
+                text: 'Hello'
+            }
+        ]);
+        done();
     });
     callback.dispatch({id: 1, text: 'Hello'});
 });
 
 test('does not leak private listeners array', done => {
     const callback = createCallback();
-    callback.subscribe(function () {
-      expect(this).toBe(undefined);
-      done();
+    callback.subscribe(function() {
+        expect(this).toBeUndefined();
+        done();
     });
     callback.dispatch();
 });
