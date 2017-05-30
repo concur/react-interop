@@ -22,7 +22,7 @@ import React from 'react';
 // DisplayName is a sample React component that we want to export
 const DisplayName = ({name}) => (
     <div>
-        Name: <span>{name}</span>
+        Name: {name}
     </div>
 );
 
@@ -90,16 +90,34 @@ import {createStore} from 'redux';
 import {exportComponents} from 'react-interop';
 import React from 'react';
 import {Provider} from 'react-redux';
-import reducers from './reducers';
 
-// DisplayName is a sample React component that we want to export
-const DisplayName = ({name}) => (
+function reducer(state = {}, action) {
+    switch (action.type) {
+        case 'SET_AGE':
+            const age = action.age;
+
+            return {
+                ...state,
+                age
+            };
+
+        default:
+            return state;
+    }
+}
+
+// NameAndAge is a sample React component that we want to export
+const NameAndAge = ({age, name}) => (
     <div>
-        Name: <span>{name}</span>
+        <div>Name: {name}</div>
+        <div>Age: {age}</div>
     </div>
 );
 
-const store = createStore(reducers);
+const mapStateToProps = ({age}) => ({age});
+const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
+
+const store = createStore(reducer, {age:42});
 
 // The second parameter is the container type that every
 // component instance should be rendered within.
@@ -108,7 +126,9 @@ const store = createStore(reducers);
 // In this example, we supply react-redux Provider and
 // the store instance to be used for every Provider
 const exported = exportComponents(
-    {DisplayName},
+    {
+        DisplayName: ConnectedNameAndAge
+    },
     Provider,
     {store}
 );
@@ -118,10 +138,93 @@ const exported = exportComponents(
 window.ExportedComponents = exported;
 ```
 
-Consumers of your exported components do not need to do anything differently when the components are wrapped in a container.  The result of `renderToStaticMarkup` or `render` for these exported components will result in:
+Consumers of your exported components do not need to do anything differently when the components are wrapped in a container.
+
+## Exporting Redux Action Creators
+
+Alongside your React components, you can also use a small bit of code to export your action creators to the consuming application.  This relies on redux's `bindActionCreators` function to expose pure JavaScript functions that will dispatch actions on your store.
+
+_Nothing is needed beyond `bindActionCreators` and a simple convention, so there are not any helpers from react-interop involved in exporting action creators._
 
 ``` jsx
-<Provider store={store}>
-    <DisplayName {...propsFromCaller} />
-</Provider>
+// Run webpack over this entry point to produce a JS file
+// that provides your exported components via react-interop
+// For this example, output would be 'exported-components.js'
+
+import {exportComponents} from 'react-interop';
+import React from 'react';
+import {Provider} from 'react-redux';
+import {bindActionCreators, createStore} from 'redux';
+
+function reducer(state = {}, action) {
+    switch (action.type) {
+        case 'SET_AGE':
+            const age = action.age;
+
+            return {
+                ...state,
+                age
+            };
+
+        default:
+            return state;
+    }
+}
+
+function setAge(age) {
+    return {
+        type: 'SET_AGE',
+        age
+    };
+}
+
+// NameAndAge is a sample React component that we want to export
+const NameAndAge = ({age, name}) => (
+    <div>
+        <div>Name: {name}</div>
+        <div>Age: {age}</div>
+    </div>
+);
+
+const mapStateToProps = ({age}) => ({age});
+const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
+
+const store = createStore(reducer, {age:42});
+
+// Generate the exported components
+const exportedComponents = exportComponents(
+    {
+        DisplayName: ConnectedNameAndAge
+    },
+    Provider,
+    {store}
+);
+
+const exportedActions = bindActionCreators({setAge}, store.dispatch);
+
+// The exported components can be made available globally
+// for consumers to reference
+window.ExportedComponents = {
+    ...exportedComponents,
+    ...exportedActions
+};
+```
+
+With this approach, consumers can now invoke vanilla JavaScript functions that will dispatch redux actions, update your store, and cause any exported components rendered through the `render` method to update.  Subsequent calls to `renderToStaticMarkup` will also respect store updates.
+
+``` html
+<script src="exported-components.js"></script>
+<script>
+
+    var displayName = window.ExportedComponents.DisplayName;
+
+    // This results in dispatching the setAge action creator
+    // and the store will be updated with {age: 34}
+    window.ExportedComponents.setAge(34);
+
+    var displayNameHtml = displayName.renderToStaticMarkup({
+        name: 'Via Interop'
+    });
+
+</script>
 ```
