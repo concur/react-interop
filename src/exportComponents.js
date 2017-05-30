@@ -2,6 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import ReactDOMServer from 'react-dom/server';
 
+/**
+ * Wrap a component with the react-interop API methods
+ * @param {function} Component React component type to wrap
+ * @param {function} Container Optional React component type to use as a container
+ * @param {object} containerProps Optional props for the container
+ * @return {object} An object with render and renderToStaticMarkup methods
+ */
 function wrapComponent(Component, Container, containerProps) {
     return {
         createElement(componentProps) {
@@ -32,6 +39,13 @@ function wrapComponent(Component, Container, containerProps) {
     };
 }
 
+/**
+ * Export React components for interop rendering
+ * @param {object} componentTypes Each property is a React component type to be exported
+ * @param {function} Container Optional React component type to use as a container
+ * @param {object} containerProps Optional props for the container
+ * @return {object} An object with properties for each React component type exported, each of those having render and renderToStaticMarkup methods
+ */
 export default function exportComponents(componentTypes, Container, containerProps) {
     const exported = {};
 
