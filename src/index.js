@@ -1,3 +1,7 @@
+import createCallback from './createCallback';
 import exportComponents from './exportComponents';
 
-export { exportComponents };
+export {
+    createCallback,
+    exportComponents
+};

@@ -9,7 +9,7 @@ react-interop enables these scenarios by delivering your components in an API th
 
 ## Exporting Components
 
-Exporting your React components through react-interop makes them available for legacy or third-party integration.  To export them, create a webpack entry point to produce a JavaScript bundle to be referenced by the host application (legacy or third-party).  The bundle will have code like the following.
+Exporting your React components through react-interop makes them available for legacy or third-party integration.  To export them, create a webpack entry point to produce a JavaScript bundle to be referenced by the consumer (legacy or third-party).  The bundle will have code like the following.
 
 ``` jsx
 // Run webpack over this entry point to produce a JS file
@@ -200,10 +200,11 @@ const exportedComponents = exportComponents(
     {store}
 );
 
+// Use bindActionCreators to be ready to export the action creators
 const exportedActions = bindActionCreators({setAge}, store.dispatch);
 
-// The exported components can be made available globally
-// for consumers to reference
+// The exported components and actions can be made
+// available globally for consumers to reference
 window.ExportedComponents = {
     ...exportedComponents,
     ...exportedActions
@@ -225,6 +226,152 @@ With this approach, consumers can now invoke vanilla JavaScript functions that w
     var displayNameHtml = displayName.renderToStaticMarkup({
         name: 'Via Interop'
     });
+
+</script>
+```
+
+## Making Callbacks to Consumers
+
+If the consumer uses the `renderToStaticMarkup` rendering approach, there may be times when you need to invoke a callback to inform the consuming application that components need to be re-rendered or that other notable events have occurred.
+
+To fulfill this requirement, react-interop supplies a pub/sub model based on redux's own `subscribe` implementation.  Your webpack entry point will define callbacks that the consumer can subscribe to.
+
+``` jsx
+// Run webpack over this entry point to produce a JS file
+// that provides your exported components via react-interop
+// For this example, output would be 'exported-components.js'
+
+import React from 'react';
+import {Provider} from 'react-redux';
+import {createCallback, exportComponents} from 'react-interop';
+import {bindActionCreators, createStore} from 'redux';
+
+function reducer(state = {}, action) {
+    switch (action.type) {
+        case 'SET_AGE':
+            const age = action.age;
+
+            return {
+                ...state,
+                age
+            };
+
+        case 'INCREMENT_AGE':
+            const {age} = state;
+
+            return {
+                ...state,
+                age: (age + 1)
+            };
+
+        default:
+            return state;
+    }
+}
+
+function setAge(age) {
+    return {
+        type: 'SET_AGE',
+        age
+    };
+}
+
+function incrementAge() {
+    return {
+        type: 'INCREMENT_AGE'
+    };
+}
+
+// NameAndAge is a sample React component that we want to export
+const NameAndAge = ({age, name}) => (
+    <div>
+        <div>Name: {name}</div>
+        <div>Age: {age}</div>
+    </div>
+);
+
+const mapStateToProps = ({age}) => ({age});
+const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
+
+// Create a callback pub/sub instance
+const onAgeChanged = createCallback();
+
+// Using redux middleware, watch for the age value to change
+// and dispatch out to any subscribers that the age was updated
+const ageNotificationMiddleware = store => next => action => {
+    const {age: oldAge} = store.getState().age;
+
+    next(action);
+
+    const {age: newAge} = store.getState().age;
+
+    if (oldAge !== newAge) {
+        onAgeChanged.dispatch(newAge);
+    }
+};
+
+const store = createStore(reducer, {age:42});
+
+// Every 10 seconds, increment the age by a year
+window.setInterval(incrementAge, 10000);
+
+// Generate the exported components
+const exportedComponents = exportComponents(
+    {
+        DisplayName: ConnectedNameAndAge
+    },
+    Provider,
+    {store}
+);
+
+// Use bindActionCreators to be ready to export the action creators
+const exportedActions = bindActionCreators({setAge}, store.dispatch);
+
+// The exported components, actions, and callbacks can
+// be made available globally for consumers to reference
+window.ExportedComponents = {
+    ...exportedComponents,
+    ...exportedActions,
+    onAgeChanged
+};
+```
+
+With the `onAgeChanged` callback exported, consumers can now subscribe to the callback and receive the callback parameters.
+
+``` html
+<script src="exported-components.js"></script>
+<script>
+
+    var displayName = window.ExportedComponents.DisplayName;
+
+    // This results in dispatching the setAge action creator
+    // and the store will be updated with {age: 34}
+    window.ExportedComponents.setAge(34);
+
+    // The page is being rendered by building HTML as strings
+    // and the renderToStaticMarkup function is used. This
+    // needs to be called again each time the page is rendered.
+    function renderPage() {
+        var displayNameHtml = displayName.renderToStaticMarkup({
+            name: 'Via Interop'
+        });
+
+        // ...
+    }
+
+    renderPage();
+
+    // When the ExportedComponents notify that the age has changed,
+    // display a status and render the page again.
+    function notifyOnAgeChange(age) {
+        window.status = 'The age has changed to ' + age;
+        renderPage();
+    }
+
+    var onAgeChanged = window.ExportedComponents.onAgeChanged;
+
+    // The subscribe function returns the unsubscribe function
+    var unsubscribeAgeChanged = onAgeChanged.subscribe(notifyOnAgeChange);
 
 </script>
 ```
