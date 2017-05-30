@@ -236,3 +236,13 @@ test('does not leak private listeners array', done => {
     });
     callback.dispatch();
 });
+
+test('throws an error when no listener is supplied', () => {
+    const callback = createCallback();
+    expect(() => callback.subscribe()).toThrowError('Expected listener to be a function');
+});
+
+test('throws an error when the listener is not a function', () => {
+    const callback = createCallback();
+    expect(() => callback.subscribe('not a function')).toThrowError('Expected listener to be a function');
+});
