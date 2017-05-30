@@ -5,15 +5,15 @@ Do you want to render React components into a legacy application that uses a dif
 
 Are you delivering a component for someone else to render in their application?  Do you need your component to work regardless of the framework their application is built in?
 
-react-interop enables these scenarios by delivering your components in an API that can be used by virtually any other client-side framework.
+react-interop enables these scenarios by delivering your components in an API that can be used by virtually any other JavaScript framework.
 
 ## Exporting Components
 
-Exporting your React components through react-interop makes them available for legacy or third-party integration.  To export them, create a webpack entry point to produce a JavaScript bundle to be referenced by the consumer (legacy or third-party).  The bundle will have code like the following.
+Exporting React components through react-interop makes them available for legacy or third-party integration.  To export them, create a webpack entry point to produce a JavaScript bundle to be referenced by the consumer (legacy or third-party).  The entry point will have code like the following.
 
 ``` jsx
 // Run webpack over this entry point to produce a JS file
-// that provides your exported components via react-interop
+// that provides the exported components via react-interop
 // For this example, output would be 'exported-components.js'
 
 import {exportComponents} from 'react-interop';
@@ -40,15 +40,15 @@ window.ExportedComponents = exported;
 
 ## Consuming Exported Components as Static Markup
 
-Your components then integrate into legacy or third-party systems using vanilla JavaScript that can interop with virtually any client-side JavaScript library.
+Exported components integrate into legacy or third-party applications using vanilla JavaScript.
 
 ``` html
 <script src="exported-components.js"></script>
 <script>
 
-    var displayName = window.ExportedComponents.DisplayName;
+    var DisplayName = window.ExportedComponents.DisplayName;
 
-    var displayNameHtml = displayName.renderToStaticMarkup({
+    var displayNameHtml = DisplayName.renderToStaticMarkup({
         name: 'Via Interop'
     });
 
@@ -57,18 +57,21 @@ Your components then integrate into legacy or third-party systems using vanilla 
 
 ## Consuming Exported Components for Live Rendering
 
-Exported components also provide live rendering for "durable" containers that you can render into.
+Exported components also provide live rendering for "durable" containers where the component becomes the owner of the container element.
 
 ``` html
+<!-- The DIV that the display name component will be rendered into -->
 <div id="display-name"></div>
 
 <script src="exported-components.js"></script>
 <script>
 
-    var displayName = window.ExportedComponents.DisplayName;
+    var DisplayName = window.ExportedComponents.DisplayName;
 
-    displayName.render(
+    DisplayName.render(
         {name: 'Via Interop'},
+        // Supply either an element or and element id string
+        // (for document.getElementById to be used by default)
         document.getElementById('display-name')
     );
 
@@ -77,13 +80,13 @@ Exported components also provide live rendering for "durable" containers that yo
 
 ## Backing Components with redux
 
-react-interop also supports backing your components with redux or other container components to enable state-driven components.  This works with both static markup and live rendering.
+react-interop also supports backing components with redux or other container components to enable state-driven components.  This works with both static markup and live rendering.
 
-To accomplish this, your webpack entry point will create your redux store, and pass the `Provider` component and its props to `exportComponents`.
+To accomplish this, the webpack entry point will create the redux store, and pass the `Provider` component and its props to `exportComponents`.
 
 ``` jsx
 // Run webpack over this entry point to produce a JS file
-// that provides your exported components via react-interop
+// that provides the exported components via react-interop
 // For this example, output would be 'exported-components.js'
 
 import {createStore} from 'redux';
@@ -138,19 +141,19 @@ const exported = exportComponents(
 window.ExportedComponents = exported;
 ```
 
-Consumers of your exported components do not need to do anything differently when the components are wrapped in a container.
+Consumers of exported components do not need to do anything differently when the components are wrapped in a container.
 
-_Note that react-interop does not depend on redux.  You can use any container element to wrap around your exported components._
+_Note that react-interop does not depend on redux or react-redux.  You can use any container element to wrap around exported components._
 
 ## Exporting Redux Action Creators
 
-Alongside your React components, you can also use a small bit of code to export your action creators to the consuming application.  This relies on redux's `bindActionCreators` function to expose pure JavaScript functions that will dispatch actions on your store.
+Alongside React components, you can also use a small bit of code to export action creators to the consuming application.  This relies on redux's `bindActionCreators` function to expose pure JavaScript functions that will dispatch actions on the store.
 
 _Nothing is needed beyond `bindActionCreators` and a simple convention, so there are not any helpers from react-interop involved in exporting action creators._
 
 ``` jsx
 // Run webpack over this entry point to produce a JS file
-// that provides your exported components via react-interop
+// that provides the exported components via react-interop
 // For this example, output would be 'exported-components.js'
 
 import {exportComponents} from 'react-interop';
@@ -213,36 +216,36 @@ window.ExportedComponents = {
 };
 ```
 
-With this approach, consumers can now invoke vanilla JavaScript functions that will dispatch redux actions, update your store, and cause any exported components rendered through the `render` method to update.  Subsequent calls to `renderToStaticMarkup` will also respect store updates.
-
-_Note that react-interop does not depend on redux.  This same approach can be used with other state management implementations._
+With this approach, consumers can now invoke vanilla JavaScript functions that will dispatch redux actions, update the store, and cause any exported components rendered through the `render` method to update.  Subsequent calls to `renderToStaticMarkup` will also respect store updates.
 
 ``` html
 <script src="exported-components.js"></script>
 <script>
 
-    var displayName = window.ExportedComponents.DisplayName;
+    var DisplayName = window.ExportedComponents.DisplayName;
 
     // This results in dispatching the setAge action creator
     // and the store will be updated with {age: 34}
     window.ExportedComponents.setAge(34);
 
-    var displayNameHtml = displayName.renderToStaticMarkup({
+    var displayNameHtml = DisplayName.renderToStaticMarkup({
         name: 'Via Interop'
     });
 
 </script>
 ```
 
+_Note that react-interop does not depend on redux.  This same approach can be used with other state management implementations._
+
 ## Making Callbacks to Consumers
 
 If the consumer uses the `renderToStaticMarkup` rendering approach, there may be times when you need to invoke a callback to inform the consuming application that components need to be re-rendered or that other notable events have occurred.
 
-To fulfill this requirement, react-interop supplies a pub/sub model based on redux's own `subscribe` implementation.  Your webpack entry point will define callbacks that the consumer can subscribe to.
+To fulfill this requirement, react-interop supplies a pub/sub model based on redux's own `subscribe` implementation.  The webpack entry point will define callbacks that the consumer can subscribe to.
 
 ``` jsx
 // Run webpack over this entry point to produce a JS file
-// that provides your exported components via react-interop
+// that provides the exported components via react-interop
 // For this example, output would be 'exported-components.js'
 
 import React from 'react';
@@ -287,6 +290,7 @@ function incrementAge() {
 }
 
 // NameAndAge is a sample React component that we want to export
+// name comes in through props, age will come from the store
 const NameAndAge = ({age, name}) => (
     <div>
         <div>Name: {name}</div>
@@ -314,7 +318,7 @@ const ageNotificationMiddleware = store => next => action => {
     }
 };
 
-const store = createStore(reducer, {age:42});
+const store = createStore(reducer, {age:42}, [ageNotificationMiddleware]);
 
 // Every 10 seconds, increment the age by a year
 window.setInterval(incrementAge, 10000);
@@ -346,7 +350,7 @@ With the `onAgeChanged` callback exported, consumers can now subscribe to the ca
 <script src="exported-components.js"></script>
 <script>
 
-    var displayName = window.ExportedComponents.DisplayName;
+    var DisplayName = window.ExportedComponents.DisplayName;
 
     // This results in dispatching the setAge action creator
     // and the store will be updated with {age: 34}
@@ -356,7 +360,7 @@ With the `onAgeChanged` callback exported, consumers can now subscribe to the ca
     // and the renderToStaticMarkup function is used. This
     // needs to be called again each time the page is rendered.
     function renderPage() {
-        var displayNameHtml = displayName.renderToStaticMarkup({
+        var displayNameHtml = DisplayName.renderToStaticMarkup({
             name: 'Via Interop'
         });
 
@@ -380,7 +384,7 @@ With the `onAgeChanged` callback exported, consumers can now subscribe to the ca
 </script>
 ```
 
-_Note that react-interop does not depend on redux.  These callbacks can be used for any scenario your exported components encounter where the consuming application needs to be notified._
+_Note that react-interop does not depend on redux.  These callbacks can be used for any scenario where the consuming application needs to be notified._
 
 ## Wrap-Up
 
@@ -389,7 +393,7 @@ react-interop provides two small utilities (`exportComponents` and `createCallba
 The two rendering scenarios are:
 
 1. `render` components into "durable" containers (where the component then becomes the owner of the container)
-2. `renderToStaticMarkup` and get the static HTML markup output from components for rendering inline with other components from the consumer
+2. `renderToStaticMarkup` gets the static HTML markup output from components for rendering inline with other components from the consumer
 
 The exported API can also expose callbacks using `createCallback` where consumers subscribe to callbacks from your components.
 
