@@ -1,5 +1,7 @@
 import {exportComponents} from '../src';
 import React from 'react';
+import ReactDOM from 'react-dom';
+import ReactDOMServer from 'react-dom/server';
 
 /* eslint-disable react/no-multi-comp, react/prop-types */
 
@@ -70,6 +72,53 @@ describe('exported', () => {
                 expect(markup).toEqual('<span id="name-component">usesProps</span>');
             });
         });
+
+        describe('render', () => {
+            let element, target;
+
+            beforeEach(() => {
+                element = null;
+                target = null;
+
+                ReactDOM.render = jest.fn((el, t) => {
+                    element = el;
+                    target = t;
+                });
+            });
+
+            test('calls ReactDOM.render', () => {
+                exported.NameComponent.render();
+                expect(ReactDOM.render).toBeCalled();
+            });
+
+            test('renders a valid element', () => {
+                exported.NameComponent.render();
+                expect(React.isValidElement(element)).toBe(true);
+            });
+
+            test('passes props through to the component', () => {
+                exported.NameComponent.render({name: 'withProps'});
+                expect(element.props.name).toBe('withProps');
+            });
+
+            test('uses the target element if it is an object', () => {
+                const targetElement = { mock: true };
+                exported.NameComponent.render(null, targetElement);
+                expect(target).toBe(targetElement);
+            });
+
+            test('uses document.getElementById if the target element is a string', () => {
+                const targetElement = { mock: true };
+                document.getElementById = jest.fn((id) => {
+                    return targetElement;
+                });
+
+                exported.NameComponent.render(null, 'target-element');
+                expect(document.getElementById).toBeCalled();
+                expect(document.getElementById.mock.calls[0][0]).toBe('target-element');
+                expect(target).toBe(targetElement);
+            });
+        });
     });
 
     describe('with a Container', () => {
@@ -97,6 +146,29 @@ describe('exported', () => {
         describe('renderToStaticMarkup', () => {
             test('renders the component into the Container', () => {
                 const markup = exported.NameComponent.renderToStaticMarkup({name: 'inContainer'});
+                expect(markup).toEqual('<div id="container-component"><span id="container-name">TheContainer</span><span id="name-component">inContainer</span></div>');
+            });
+        });
+
+        describe('render', () => {
+            let element = null;
+
+            beforeEach(() => {
+                element = null;
+
+                ReactDOM.render = jest.fn((el) => {
+                    element = el;
+                });
+            });
+
+            test('renders the Container component', () => {
+                exported.NameComponent.render();
+                expect(element.type).toBe(Container);
+            });
+
+            test('renders the component inside the container', () => {
+                exported.NameComponent.render({name: 'inContainer'});
+                const markup = ReactDOMServer.renderToStaticMarkup(element);
                 expect(markup).toEqual('<div id="container-component"><span id="container-name">TheContainer</span><span id="name-component">inContainer</span></div>');
             });
         });
