@@ -140,6 +140,8 @@ window.ExportedComponents = exported;
 
 Consumers of your exported components do not need to do anything differently when the components are wrapped in a container.
 
+_Note that react-interop does not depend on redux.  You can use any container element to wrap around your exported components._
+
 ## Exporting Redux Action Creators
 
 Alongside your React components, you can also use a small bit of code to export your action creators to the consuming application.  This relies on redux's `bindActionCreators` function to expose pure JavaScript functions that will dispatch actions on your store.
@@ -212,6 +214,8 @@ window.ExportedComponents = {
 ```
 
 With this approach, consumers can now invoke vanilla JavaScript functions that will dispatch redux actions, update your store, and cause any exported components rendered through the `render` method to update.  Subsequent calls to `renderToStaticMarkup` will also respect store updates.
+
+_Note that react-interop does not depend on redux.  This same approach can be used with other state management implementations._
 
 ``` html
 <script src="exported-components.js"></script>
@@ -375,3 +379,21 @@ With the `onAgeChanged` callback exported, consumers can now subscribe to the ca
 
 </script>
 ```
+
+_Note that react-interop does not depend on redux.  These callbacks can be used for any scenario your exported components encounter where the consuming application needs to be notified._
+
+## Wrap-Up
+
+react-interop provides two small utilities (`exportComponents` and `createCallback`) to make it easy to provide an interop layer over your React components.  This interop layer allows your components to be rendered in legacy application or third-party applications where React might not be in direct use.  Consumers use vanilla JavaScript functions to render components, invoke actions, and subscribe to callbacks.
+
+The two rendering scenarios are:
+
+1. `render` components into "durable" containers (where the component then becomes the owner of the container)
+2. `renderToStaticMarkup` and get the static HTML markup output from components for rendering inline with other components from the consumer
+
+The exported API can also expose callbacks using `createCallback` where consumers subscribe to callbacks from your components.
+
+react-interop also prescribes the use of redux's `bindActionCreators` (or analogous methods from other flux implementations) to expose functions for invoking actions without the consuming being aware of the flux implementation.
+
+To provide your components to the consumer, create a webpack entry point that constructs your store and exports your components, actions, and callbacks.  Your consumers will reference your bundle as a vanilla JavaScript file.
+
