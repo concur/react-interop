@@ -2,8 +2,12 @@
     <head>
         <title>react-interop demo application</title>
         <style>
+            body {
+                font-family: Verdana;
+            }
+
             input, button {
-                font-size: 24pt;
+                font-size: 18pt;
             }
         </style>
     </head>
@@ -35,8 +39,6 @@
             function setStockPrice() {
                 var symbol = document.getElementById('symbol').value;
                 var price = Number(document.getElementById('price').value);
-
-                console.log('setStockPrice', symbol, price);
 
                 window.StockTicker.setStockPrice(symbol, price);
             }
