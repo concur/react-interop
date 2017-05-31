@@ -109,7 +109,7 @@ describe('exported', () => {
 
             test('uses document.getElementById if the target element is a string', () => {
                 const targetElement = { mock: true };
-                document.getElementById = jest.fn((id) => {
+                document.getElementById = jest.fn(() => {
                     return targetElement;
                 });
 

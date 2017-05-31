@@ -92,7 +92,7 @@ To accomplish this, the webpack entry point will create the redux store, and pas
 import {createStore} from 'redux';
 import {exportComponents} from 'react-interop';
 import React from 'react';
-import {Provider} from 'react-redux';
+import {connect, Provider} from 'react-redux';
 
 function reducer(state = {}, action) {
     switch (action.type) {
@@ -157,6 +157,7 @@ _Nothing is needed beyond `bindActionCreators` and a simple convention, so there
 // For this example, output would be 'exported-components.js'
 
 import {exportComponents} from 'react-interop';
+import PropTypes from 'prop-types';
 import React from 'react';
 import {Provider} from 'react-redux';
 import {bindActionCreators, createStore} from 'redux';
@@ -191,10 +192,15 @@ const NameAndAge = ({age, name}) => (
     </div>
 );
 
+NameAndAge.propTypes = {
+    age: PropTypes.number,
+    name: PropTypes.string
+};
+
 const mapStateToProps = ({age}) => ({age});
 const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
 
-const store = createStore(reducer, {age:42});
+const store = createStore(reducer, {age: 42});
 
 // Generate the exported components
 const exportedComponents = exportComponents(
@@ -248,8 +254,9 @@ To fulfill this requirement, react-interop supplies a pub/sub model based on red
 // that provides the exported components via react-interop
 // For this example, output would be 'exported-components.js'
 
+import PropTypes from 'prop-types';
 import React from 'react';
-import {Provider} from 'react-redux';
+import {connect, Provider} from 'react-redux';
 import {createCallback, exportComponents} from 'react-interop';
 import {bindActionCreators, createStore} from 'redux';
 
@@ -298,6 +305,11 @@ const NameAndAge = ({age, name}) => (
     </div>
 );
 
+NameAndAge.propTypes = {
+    age: PropTypes.number,
+    name: PropTypes.string
+};
+
 const mapStateToProps = ({age}) => ({age});
 const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
 
@@ -307,21 +319,25 @@ const onAgeChanged = createCallback();
 // Using redux middleware, watch for the age value to change
 // and dispatch out to any subscribers that the age was updated
 const ageNotificationMiddleware = store => next => action => {
-    const {age: oldAge} = store.getState().age;
+    const {age: oldAge} = store.getState();
 
     next(action);
 
-    const {age: newAge} = store.getState().age;
+    const {age: newAge} = store.getState();
 
     if (oldAge !== newAge) {
         onAgeChanged.dispatch(newAge);
     }
 };
 
-const store = createStore(reducer, {age:42}, [ageNotificationMiddleware]);
+const store = createStore(reducer, {age: 42}, [ageNotificationMiddleware]);
 
 // Every 10 seconds, increment the age by a year
-window.setInterval(incrementAge, 10000);
+function dispatchIncrementAge() {
+    store.dispatch(incrementAge());
+}
+
+window.setInterval(dispatchIncrementAge, 10000);
 
 // Generate the exported components
 const exportedComponents = exportComponents(

@@ -1,0 +1,96 @@
+<html>
+    <head>
+        <title>react-interop demo application</title>
+        <style>
+            input, button {
+                font-size: 24pt;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>react-interop demo application</h1>
+        <p>This page demonstrates embedding exported components in a consuming application. This is a vanilla HTML page that consumes components exported through react-interop.</p>
+        <div>
+            <input type="number" id="age" value="34" min="0" max="99" />
+            <button type="button" onclick="updateAge()">Set Age</button>
+        </div>
+        <section>
+            <h2><pre>DisplayName.render({name: 'DisplayName.render'}, 'displayname-render')</pre></h2>
+            <div id="displayname-render"></div>
+        </section>
+        <section>
+            <h2><pre>DisplayName.renderToStaticMarkup({name: 'DisplayName.renderToStaticMarkup'})</pre></h2>
+            <h3>
+                <label for="subscribed">Subscribe to Changes:</label>
+                <input type="checkbox" id="subscribed" checked onclick="updateSubscribe()" />
+            </h3>
+            <div id='displayname-rendertostaticmarkup'></div>
+        </section>
+        <script src="exported-components-packed.js"></script>
+        <script>
+
+            var unsubscribeAgeChanged;
+
+            function updateAge() {
+                var age = document.getElementById('age').value;
+                window.ExportedComponents.setAge(Number(age));
+            }
+
+            function updateSubscribe() {
+                var subscribed = document.getElementById('subscribed').checked;
+
+                if (subscribed) {
+                    subscribeToChanges();
+                } else {
+                    unsubscribeFromChanges();
+                }
+            }
+
+            function subscribeToChanges() {
+                if (!unsubscribeAgeChanged) {
+                    unsubscribeAgeChanged = window.ExportedComponents.onAgeChanged.subscribe(notifyOnAgeChange);
+                }
+            }
+
+            function unsubscribeFromChanges() {
+                if (unsubscribeAgeChanged) {
+                    unsubscribeAgeChanged();
+                }
+
+                unsubscribeAgeChanged = null;
+            }
+
+            var DisplayName = window.ExportedComponents.DisplayName;
+
+            // This results in dispatching the setAge action creator
+            // and the store will be updated with {age: 34}
+            window.ExportedComponents.setAge(34);
+
+            // The page is being rendered by building HTML as strings
+            // and the renderToStaticMarkup function is used. This
+            // needs to be called again each time the page is rendered.
+            function renderPage() {
+                var displayNameHtml = DisplayName.renderToStaticMarkup({
+                    name: 'DisplayName.renderToStaticMarkup'
+                });
+
+                var container = document.getElementById('displayname-rendertostaticmarkup');
+
+                container.innerHTML = displayNameHtml;
+            }
+
+            renderPage();
+            DisplayName.render({name: 'DisplayName.render'}, 'displayname-render');
+
+            // When the ExportedComponents notify that the age has changed,
+            // display a status and render the page again.
+            function notifyOnAgeChange(age) {
+                console.log('The age has changed', age);
+                renderPage();
+            }
+
+            subscribeToChanges();
+
+        </script>
+    </body>
+</html>
