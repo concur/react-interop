@@ -11,29 +11,34 @@
         <h1>react-interop demo application</h1>
         <p>This page demonstrates embedding exported components in a consuming application. This is a vanilla HTML page that consumes components exported through react-interop.</p>
         <div>
-            <input type="number" id="age" value="34" min="0" max="99" />
-            <button type="button" onclick="updateAge()">Set Age</button>
+            <input type="text" id="symbol" value="SAP" size="5" />
+            <input type="number" id="price" value="104" min="0" max="1000" />
+            <button type="button" onclick="setStockPrice()">Set Stock Price</button>
         </div>
         <section>
-            <h2><pre>DisplayName.render({name: 'DisplayName.render'}, 'displayname-render')</pre></h2>
-            <div id="displayname-render"></div>
+            <h2><pre>StockPrices.render(null, 'stockprices')</pre></h2>
+            <div id="stockprices"></div>
         </section>
         <section>
-            <h2><pre>DisplayName.renderToStaticMarkup({name: 'DisplayName.renderToStaticMarkup'})</pre></h2>
+            <h2><pre>StockPrice.renderToStaticMarkup({symbol: 'SAP'})</pre></h2>
             <h3>
                 <label for="subscribed">Subscribe to Changes:</label>
                 <input type="checkbox" id="subscribed" checked onclick="updateSubscribe()" />
             </h3>
-            <div id='displayname-rendertostaticmarkup'></div>
+            <div id='stockprice-sap'></div>
         </section>
         <script src="exported-components-packed.js"></script>
         <script>
 
-            var unsubscribeAgeChanged;
+            var unsubscribePriceChanges;
 
-            function updateAge() {
-                var age = document.getElementById('age').value;
-                window.ExportedComponents.setAge(Number(age));
+            function setStockPrice() {
+                var symbol = document.getElementById('symbol').value;
+                var price = Number(document.getElementById('price').value);
+
+                console.log('setStockPrice', symbol, price);
+
+                window.StockTicker.setStockPrice(symbol, price);
             }
 
             function updateSubscribe() {
@@ -47,46 +52,46 @@
             }
 
             function subscribeToChanges() {
-                if (!unsubscribeAgeChanged) {
-                    unsubscribeAgeChanged = window.ExportedComponents.onAgeChanged(notifyOnAgeChange);
+                if (!unsubscribePriceChanges) {
+                    unsubscribePriceChanges = window.StockTicker.onPriceChanged(notifyOnStockChange);
                 }
             }
 
             function unsubscribeFromChanges() {
-                if (unsubscribeAgeChanged) {
-                    unsubscribeAgeChanged();
+                if (unsubscribePriceChanges) {
+                    unsubscribePriceChanges();
                 }
 
-                unsubscribeAgeChanged = null;
+                unsubscribePriceChanges = null;
             }
 
-            var DisplayName = window.ExportedComponents.DisplayName;
-
-            // This results in dispatching the setAge action creator
-            // and the store will be updated with {age: 34}
-            window.ExportedComponents.setAge(34);
+            // Add the initial stock price using the default field values
+            setStockPrice();
 
             // The page is being rendered by building HTML as strings
             // and the renderToStaticMarkup function is used. This
             // needs to be called again each time the page is rendered.
-            function renderPage() {
-                var displayNameHtml = DisplayName.renderToStaticMarkup({
-                    name: 'DisplayName.renderToStaticMarkup'
+            function renderSAPStockPrice() {
+                var displayNameHtml = window.StockTicker.StockPrice.renderToStaticMarkup({
+                    symbol: 'SAP'
                 });
 
-                var container = document.getElementById('displayname-rendertostaticmarkup');
-
+                var container = document.getElementById('stockprice-sap');
                 container.innerHTML = displayNameHtml;
             }
 
-            renderPage();
-            DisplayName.render({name: 'DisplayName.render'}, 'displayname-render');
+            renderSAPStockPrice();
+            window.StockTicker.StockPrices.render(null, 'stockprices');
 
-            // When the ExportedComponents notify that the age has changed,
-            // display a status and render the page again.
-            function notifyOnAgeChange(age) {
-                console.log('The age has changed', age);
-                renderPage();
+            // When the StockTicker notifies that a price has changed,
+            // log a status message and re-render the SAP stock price
+            // if it was the price that changed
+            function notifyOnStockChange(stock) {
+                console.log('A stock price changed', stock.symbol, stock.price);
+
+                if (stock.symbol === 'SAP') {
+                    renderSAPStockPrice();
+                }
             }
 
             subscribeToChanges();

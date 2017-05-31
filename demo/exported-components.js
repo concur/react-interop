@@ -2,115 +2,151 @@
 // that provides the exported components via react-interop
 // For this example, output would be 'exported-components.js'
 
+/* eslint-disable react/no-multi-comp */
+
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect, Provider} from 'react-redux';
 import {applyMiddleware, bindActionCreators, createStore} from 'redux';
 import {createCallback, exportCallbacks, exportComponents} from '../src';
 
+function applyFluctuation(stocks) {
+    const newStocks = {};
+
+    Object.keys(stocks).forEach((symbol) => {
+        // Apply a fluctuation of +/- 10%
+        const fluctuation = (Math.random() - 0.5) * 0.1;
+
+        newStocks[symbol] = stocks[symbol] + (stocks[symbol] * fluctuation);
+    });
+
+    return newStocks;
+}
+
 function reducer(state = {}, action) {
-    let age;
-
     switch (action.type) {
-        case 'SET_AGE':
-            age = action.age;
+        case 'SET_STOCK_PRICE':
+            const {price, symbol} = action;
 
             return {
                 ...state,
-                age
+                [symbol]: price
             };
 
-        case 'INCREMENT_AGE':
-            age = state.age + 1;
-
-            return {
-                ...state,
-                age
-            };
+        case 'FLUCTUATE_STOCKS':
+            return applyFluctuation(state);
 
         default:
             return state;
     }
 }
 
-function setAge(age) {
+function setStockPrice(symbol, price) {
     return {
-        type: 'SET_AGE',
-        age
+        type: 'SET_STOCK_PRICE',
+        symbol,
+        price
     };
 }
 
-function incrementAge() {
+function fluctuateStockPrices() {
     return {
-        type: 'INCREMENT_AGE'
+        type: 'FLUCTUATE_STOCKS'
     };
 }
 
-// NameAndAge is a sample React component that we want to export
-// name comes in through props, age will come from the store
-const NameAndAge = ({age, name}) => (
+// StockPrice is a sample React component that we want to export
+// symbol comes from props, price come from state
+const StockPrice = ({symbol, price}) => (
     <div>
-        <div>Name: {name}</div>
-        <div>Age: {age}</div>
+        <strong>{symbol}</strong>: {price.toFixed(2)}
     </div>
 );
 
-NameAndAge.propTypes = {
-    age: PropTypes.number,
-    name: PropTypes.string
+StockPrice.propTypes = {
+    price: PropTypes.number.isRequired,
+    symbol: PropTypes.string.isRequired
 };
 
-const mapStateToProps = ({age}) => ({age});
-const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
+const mapStockPriceStateToProps = (state, {symbol}) => ({
+    symbol,
+    price: state[symbol]
+});
+
+const ConnectedStockPrice = connect(mapStockPriceStateToProps)(StockPrice);
+
+const StockPrices = ({symbols}) => (
+    <div>
+        { symbols.map((symbol) => (<ConnectedStockPrice key={symbol} symbol={symbol} />)) }
+    </div>
+);
+
+StockPrices.propTypes = {
+    symbols: PropTypes.arrayOf(PropTypes.string).isRequired
+};
+
+const mapStockPricesStateToProps = (state) => ({
+    symbols: Object.keys(state)
+});
+
+const ConnectedStockPrices = connect(mapStockPricesStateToProps)(StockPrices);
 
 // Create a callback pub/sub instance
-const onAgeChanged = createCallback();
+const onPriceChanged = createCallback();
 
-// Using redux middleware, watch for the age value to change
-// and dispatch out to any subscribers that the age was updated
-const ageNotificationMiddleware = store => next => action => {
-    const {age: oldAge} = store.getState();
+// Using redux middleware, watch for price changes
+// and dispatch out to any subscribers that a price was changed
+const priceChangeMiddleware = store => next => action => {
+    const oldPrices = store.getState();
 
     next(action);
 
-    const {age: newAge} = store.getState();
+    const newPrices = store.getState();
 
-    if (oldAge !== newAge) {
-        onAgeChanged.dispatch(newAge);
-    }
+    Object.keys(newPrices).forEach((symbol) => {
+        if (newPrices[symbol] !== oldPrices[symbol]) {
+            onPriceChanged.dispatch({
+                symbol,
+                price: newPrices[symbol]
+            });
+        }
+    });
 };
 
 const store = createStore(
     reducer,
-    {age: 42},
-    applyMiddleware(ageNotificationMiddleware)
+    {
+        SAP: 104
+    },
+    applyMiddleware(priceChangeMiddleware)
 );
 
-// Every 10 seconds, increment the age by a year
-function dispatchIncrementAge() {
-    store.dispatch(incrementAge());
+// Fluctuate stock prices every second
+function dispatchFluctuation() {
+    store.dispatch(fluctuateStockPrices());
 }
 
-window.setInterval(dispatchIncrementAge, 10000);
+window.setInterval(dispatchFluctuation, 10000);
 
 // Generate the exported components
 const exportedComponents = exportComponents(
     {
-        DisplayName: ConnectedNameAndAge
+        StockPrice: ConnectedStockPrice,
+        StockPrices: ConnectedStockPrices
     },
     Provider,
     {store}
 );
 
 // Use bindActionCreators to be ready to export the action creators
-const exportedActions = bindActionCreators({setAge}, store.dispatch);
+const exportedActions = bindActionCreators({setStockPrice}, store.dispatch);
 
 // Generate the exported callbacks
-const exportedCallbacks = exportCallbacks({onAgeChanged});
+const exportedCallbacks = exportCallbacks({onPriceChanged});
 
 // The exported components, actions, and callbacks can
 // be made available globally for consumers to reference
-window.ExportedComponents = {
+window.StockTicker = {
     ...exportedComponents,
     ...exportedActions,
     ...exportedCallbacks
