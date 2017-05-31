@@ -257,7 +257,7 @@ To fulfill this requirement, react-interop supplies a pub/sub model based on red
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect, Provider} from 'react-redux';
-import {createCallback, exportComponents} from 'react-interop';
+import {createCallback, exportCallbacks, exportComponents} from 'react-interop';
 import {bindActionCreators, createStore} from 'redux';
 
 function reducer(state = {}, action) {
