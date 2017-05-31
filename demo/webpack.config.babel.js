@@ -1,12 +1,11 @@
-import path from 'path';
 import webpack from 'webpack';
 
 export default {
     entry: {
-        'exported-components': './demo/exported-components.js'
+        'stockticker': './demo/stockticker.js'
     },
     output: {
-        path: path.join(__dirname, './demo'),
+        path: __dirname,
         filename: '[name]-packed.js',
         publicPath: '/'
     },

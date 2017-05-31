@@ -13,7 +13,7 @@
         <div>
             <input type="text" id="symbol" value="SAP" size="5" />
             <input type="number" id="price" value="104" min="0" max="1000" />
-            <button type="button" onclick="setStockPrice()">Set Stock Price</button>
+            <button type="button" onclick="setStockPrice()">Add/Update Stock Price</button>
         </div>
         <section>
             <h2><pre>StockPrices.render(null, 'stockprices')</pre></h2>
@@ -27,7 +27,7 @@
             </h3>
             <div id='stockprice-sap'></div>
         </section>
-        <script src="exported-components-packed.js"></script>
+        <script src="stockticker-packed.js"></script>
         <script>
 
             var unsubscribePriceChanges;

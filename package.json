@@ -5,8 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "babel src --out-dir lib",
-    "clean": "rm -rf lib",
-    "demo": "webpack && open ./demo/consuming-application.html",
+    "clean": "rm -rf lib && rm ./demo/*-packed.js",
+    "demo": "webpack --config ./demo/webpack.config.babel.js && open ./demo/consuming-application.html",
     "lint": "eslint .",
     "test": "jest"
   },
