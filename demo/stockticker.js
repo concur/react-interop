@@ -121,12 +121,12 @@ const store = createStore(
     applyMiddleware(priceChangeMiddleware)
 );
 
-// Fluctuate stock prices every second
+// Fluctuate stock prices every 5 seconds
 function dispatchFluctuation() {
     store.dispatch(fluctuateStockPrices());
 }
 
-window.setInterval(dispatchFluctuation, 10000);
+window.setInterval(dispatchFluctuation, 5000);
 
 // Generate the exported components
 const exportedComponents = exportComponents(

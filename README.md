@@ -38,9 +38,9 @@ const exported = exportComponents({
 window.StockTicker = exported;
 ```
 
-## Consuming Exported Components as Static Markup
+## Consuming Exported Components as HTML (Static Markup)
 
-Exported components integrate into legacy or third-party applications using vanilla JavaScript.
+Exported components integrate into legacy or third-party applications using vanilla JavaScript to get the HTML of the rendered components.
 
 ``` html
 <script src="stockticker.js"></script>
@@ -114,17 +114,12 @@ const StockPrice = ({symbol, price}) => (
     </div>
 );
 
-StockPrice.propTypes = {
-    price: PropTypes.number.isRequired,
-    symbol: PropTypes.string.isRequired
-};
-
-const mapStockPriceStateToProps = (state, {symbol}) => ({
+const mapStateToProps = (state, {symbol}) => ({
     symbol,
     price: state[symbol]
 });
 
-const ConnectedStockPrice = connect(mapStockPriceStateToProps)(StockPrice);
+const ConnectedStockPrice = connect(mapStateToProps)(StockPrice);
 
 const store = createStore(reducer, {SAP: 104});
 
@@ -156,12 +151,7 @@ Consumers of exported components do not need to do anything differently when the
 <script src="stockticker.js"></script>
 <script>
 
-    window.StockTicker.StockPrice.render(
-        {symbol: 'SAP'},
-        // Supply either an element or and element id string
-        // (for document.getElementById to be used by default)
-        document.getElementById('stockprice-sap')
-    );
+    window.StockTicker.StockPrice.render({symbol: 'SAP'}, 'stockprice-sap');
 
 </script>
 ```
@@ -207,34 +197,21 @@ function setStockPrice(symbol, price) {
     };
 }
 
-// StockPrice is a sample React component that we want to export
-// symbol comes from props, price come from state
 const StockPrice = ({symbol, price}) => (
     <div>
         <strong>{symbol}</strong>: {price.toFixed(2)}
     </div>
 );
 
-StockPrice.propTypes = {
-    price: PropTypes.number.isRequired,
-    symbol: PropTypes.string.isRequired
-};
-
-const mapStockPriceStateToProps = (state, {symbol}) => ({
+const mapStateToProps = (state, {symbol}) => ({
     symbol,
     price: state[symbol]
 });
 
-const ConnectedStockPrice = connect(mapStockPriceStateToProps)(StockPrice);
+const ConnectedStockPrice = connect(mapStateToProps)(StockPrice);
 
 const store = createStore(reducer, {SAP: 104});
 
-// The second parameter is the container type that every
-// component instance should be rendered within.
-// The third parameter is an object that represents the
-// props to provide to the container elements themselves
-// In this example, we supply react-redux Provider and
-// the store instance to be used for every Provider
 const exported = exportComponents(
     {
         StockPrice: ConnectedStockPrice
@@ -263,12 +240,7 @@ With this approach, consumers can now invoke vanilla JavaScript functions that w
 <script src="stockticker.js"></script>
 <script>
 
-    window.StockTicker.StockPrice.render(
-        {symbol: 'SAP'},
-        // Supply either an element or and element id string
-        // (for document.getElementById to be used by default)
-        document.getElementById('stockprice-sap')
-    );
+    window.StockTicker.StockPrice.render({symbol: 'SAP'}, 'stockprice-sap');
 
     // This results in dispatching the setStockPrice action
     // and the store will be updated with {SAP: 105}.
@@ -285,20 +257,13 @@ _Note that react-interop does not depend on redux.  This same approach can be us
 
 If the consumer uses the `renderToStaticMarkup` rendering approach, there may be times when you need to invoke a callback to inform the consuming application that components need to be re-rendered or that other notable events have occurred.
 
-To fulfill this requirement, react-interop supplies a pub/sub model based on redux's own `subscribe` implementation.  The webpack entry point will define callbacks that the consumer can subscribe to.
+To fulfill this requirement, react-interop supplies a pub/sub model based on redux's `subscribe` implementation.  The webpack entry point will define callbacks that the consumer can subscribe to.
 
 ``` jsx
 // Run webpack over this entry point to produce a JS file
 // that provides the exported components via react-interop
 // For this example, output would be 'stockticker.js'
 
-// Run webpack over this entry point to produce a JS file
-// that provides the exported components via react-interop
-// For this example, output would be 'exported-components.js'
-
-/* eslint-disable react/no-multi-comp */
-
-import PropTypes from 'prop-types';
 import React from 'react';
 import {connect, Provider} from 'react-redux';
 import {applyMiddleware, bindActionCreators, createStore} from 'redux';
@@ -349,31 +314,24 @@ function fluctuateStockPrices() {
     };
 }
 
-// StockPrice is a sample React component that we want to export
-// symbol comes from props, price come from state
 const StockPrice = ({symbol, price}) => (
     <div>
         <strong>{symbol}</strong>: {price.toFixed(2)}
     </div>
 );
 
-StockPrice.propTypes = {
-    price: PropTypes.number.isRequired,
-    symbol: PropTypes.string.isRequired
-};
-
-const mapStockPriceStateToProps = (state, {symbol}) => ({
+const mapStateToProps = (state, {symbol}) => ({
     symbol,
     price: state[symbol]
 });
 
-const ConnectedStockPrice = connect(mapStockPriceStateToProps)(StockPrice);
+const ConnectedStockPrice = connect(mapStateToProps)(StockPrice);
 
 // Create a callback pub/sub instance
 const onPriceChanged = createCallback();
 
 // Using redux middleware, watch for price changes
-// and dispatch out to any subscribers that a price was changed
+// and notify subscribers that a price was changed
 const priceChangeMiddleware = store => next => action => {
     const oldPrices = store.getState();
 
@@ -393,18 +351,16 @@ const priceChangeMiddleware = store => next => action => {
 
 const store = createStore(
     reducer,
-    {
-        SAP: 104
-    },
+    {SAP: 104},
     applyMiddleware(priceChangeMiddleware)
 );
 
-// Fluctuate stock prices every second
+// Fluctuate stock prices every 5 seconds
 function dispatchFluctuation() {
     store.dispatch(fluctuateStockPrices());
 }
 
-window.setInterval(dispatchFluctuation, 10000);
+window.setInterval(dispatchFluctuation, 5000);
 
 // Generate the exported components
 const exportedComponents = exportComponents(
@@ -440,11 +396,11 @@ With the `onPriceChanged` callback exported, consumers can now subscribe and rec
 <script>
 
     function renderSAPStockPrice() {
-        var markup = window.StockTicker.StockPrice.renderToStaticMarkup(
+        var stockHTML = window.StockTicker.StockPrice.renderToStaticMarkup(
             {symbol: 'SAP'}
         );
 
-        document.getElementById('stockprice-sap').innerHTML = markup;
+        document.getElementById('stockprice-sap').innerHTML = stockHTML;
     }
 
     // When the StockTicker notifies that a price has changed,
@@ -460,7 +416,8 @@ With the `onPriceChanged` callback exported, consumers can now subscribe and rec
 
     renderSAPStockPrice();
 
-    window.StockTicker.onPriceChanged(notifyOnStockChange);
+    // The corresponding unsubscribe function is returned
+    var unsubscribe = window.StockTicker.onPriceChanged(notifyOnStockChange);
 
 </script>
 ```
@@ -474,11 +431,11 @@ react-interop provides `exportComponents` and `exportCallbacks` utilities to mak
 The two rendering scenarios are:
 
 1. `render` components into "durable" containers (where the component then becomes the owner of the container)
-2. `renderToStaticMarkup` gets the static HTML markup output from components for rendering inline with other components from the consumer
-
-The exported API can expose callbacks using `createCallback` and `exportCallbacks` where consumers subscribe to callbacks from your components.
+2. `renderToStaticMarkup` gets the static HTML markup from components for rendering controlled by the consumer
 
 react-interop prescribes the use of redux's `bindActionCreators` (or analogous methods from other flux implementations) to expose functions for invoking actions without the consuming being aware of the flux implementation.
+
+The exported API can use `createCallback` and `exportCallbacks`,allowing consumers to subscribe to callbacks.
 
 To provide your components to the consumer, create a webpack entry point that constructs your store and exports your components, actions, and callbacks.  Your consumers will reference your bundle as a vanilla JavaScript file.
 
