@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {connect, Provider} from 'react-redux';
 import {applyMiddleware, bindActionCreators, createStore} from 'redux';
-import {createCallback, exportComponents} from '../src';
+import {createCallback, exportCallbacks, exportComponents} from '../src';
 
 function reducer(state = {}, action) {
     let age;
@@ -105,10 +105,13 @@ const exportedComponents = exportComponents(
 // Use bindActionCreators to be ready to export the action creators
 const exportedActions = bindActionCreators({setAge}, store.dispatch);
 
+// Generate the exported callbacks
+const exportedCallbacks = exportCallbacks({onAgeChanged});
+
 // The exported components, actions, and callbacks can
 // be made available globally for consumers to reference
 window.ExportedComponents = {
     ...exportedComponents,
     ...exportedActions,
-    onAgeChanged
+    ...exportedCallbacks
 };

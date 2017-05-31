@@ -48,7 +48,7 @@
 
             function subscribeToChanges() {
                 if (!unsubscribeAgeChanged) {
-                    unsubscribeAgeChanged = window.ExportedComponents.onAgeChanged.subscribe(notifyOnAgeChange);
+                    unsubscribeAgeChanged = window.ExportedComponents.onAgeChanged(notifyOnAgeChange);
                 }
             }
 
