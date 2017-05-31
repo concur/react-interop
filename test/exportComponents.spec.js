@@ -41,6 +41,28 @@ describe('exportComponents', () => {
             expect(renderToStaticMarkup).toBeInstanceOf(Function);
         });
     });
+
+    test('omits keys that are not functions (component types)', () => {
+        const componentTypes = {
+            Foo() {},
+            NotAFunction: {}
+        };
+
+        const exported = exportComponents(componentTypes);
+
+        expect(exported).not.toHaveProperty('NotAFunction');
+    });
+
+    test('omits keys that are null', () => {
+        const componentTypes = {
+            Foo() {},
+            Null: null
+        };
+
+        const exported = exportComponents(componentTypes);
+
+        expect(exported).not.toHaveProperty('Null');
+    });
 });
 
 describe('exported', () => {

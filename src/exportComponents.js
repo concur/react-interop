@@ -50,7 +50,9 @@ export default function exportComponents(componentTypes, Container, containerPro
     const exported = {};
 
     function exportComponent(key, componentType) {
-        exported[key] = componentType && wrapComponent(componentType, Container, containerProps);
+        if (typeof componentType === 'function') {
+            exported[key] = wrapComponent(componentType, Container, containerProps);
+        }
     }
 
     if (componentTypes) {
