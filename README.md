@@ -14,15 +14,15 @@ Exporting React components through react-interop makes them available for legacy
 ``` jsx
 // Run webpack over this entry point to produce a JS file
 // that provides the exported components via react-interop
-// For this example, output would be 'exported-components.js'
+// For this example, output would be 'stockticker.js'
 
 import {exportComponents} from 'react-interop';
 import React from 'react';
 
-// DisplayName is a sample React component that we want to export
-const DisplayName = ({name}) => (
+// StockPrice is a sample React component that we want to export
+const StockPrice = ({symbol, price}) => (
     <div>
-        Name: {name}
+        <strong>{symbol}</strong>: {price.toFixed(2)}
     </div>
 );
 
@@ -30,12 +30,12 @@ const DisplayName = ({name}) => (
 // that allows them to be rendered either as static markup or
 // with live React rendering
 const exported = exportComponents({
-    DisplayName
+    StockPrice
 });
 
 // The exported components can be made available globally
 // for consumers to reference
-window.ExportedComponents = exported;
+window.StockTicker = exported;
 ```
 
 ## Consuming Exported Components as Static Markup
@@ -43,13 +43,12 @@ window.ExportedComponents = exported;
 Exported components integrate into legacy or third-party applications using vanilla JavaScript.
 
 ``` html
-<script src="exported-components.js"></script>
+<script src="stockticker.js"></script>
 <script>
 
-    var DisplayName = window.ExportedComponents.DisplayName;
-
-    var displayNameHtml = DisplayName.renderToStaticMarkup({
-        name: 'Via Interop'
+    var stockHTML = window.StockTicker.StockPrice.renderToStaticMarkup({
+        symbol: 'SAP',
+        price: 104
     });
 
 </script>
@@ -61,18 +60,16 @@ Exported components also provide live rendering for "durable" containers where t
 
 ``` html
 <!-- The DIV that the display name component will be rendered into -->
-<div id="display-name"></div>
+<div id="stockprice-sap"></div>
 
-<script src="exported-components.js"></script>
+<script src="stockticker.js"></script>
 <script>
 
-    var DisplayName = window.ExportedComponents.DisplayName;
-
-    DisplayName.render(
-        {name: 'Via Interop'},
+    window.StockTicker.StockPrice.render(
+        {symbol: 'SAP', price: 104},
         // Supply either an element or and element id string
         // (for document.getElementById to be used by default)
-        document.getElementById('display-name')
+        document.getElementById('stockprice-sap')
     );
 
 </script>
@@ -87,7 +84,7 @@ To accomplish this, the webpack entry point will create the redux store, and pas
 ``` jsx
 // Run webpack over this entry point to produce a JS file
 // that provides the exported components via react-interop
-// For this example, output would be 'exported-components.js'
+// For this example, output would be 'stockticker.js'
 
 import {createStore} from 'redux';
 import {exportComponents} from 'react-interop';
@@ -96,12 +93,12 @@ import {connect, Provider} from 'react-redux';
 
 function reducer(state = {}, action) {
     switch (action.type) {
-        case 'SET_AGE':
-            const age = action.age;
+        case 'SET_STOCK_PRICE':
+            const {price, symbol} = action;
 
             return {
                 ...state,
-                age
+                [symbol]: price
             };
 
         default:
@@ -109,18 +106,27 @@ function reducer(state = {}, action) {
     }
 }
 
-// NameAndAge is a sample React component that we want to export
-const NameAndAge = ({age, name}) => (
+// StockPrice is a sample React component that we want to export
+// symbol comes from props, price come from state
+const StockPrice = ({symbol, price}) => (
     <div>
-        <div>Name: {name}</div>
-        <div>Age: {age}</div>
+        <strong>{symbol}</strong>: {price.toFixed(2)}
     </div>
 );
 
-const mapStateToProps = ({age}) => ({age});
-const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
+StockPrice.propTypes = {
+    price: PropTypes.number.isRequired,
+    symbol: PropTypes.string.isRequired
+};
 
-const store = createStore(reducer, {age:42});
+const mapStockPriceStateToProps = (state, {symbol}) => ({
+    symbol,
+    price: state[symbol]
+});
+
+const ConnectedStockPrice = connect(mapStockPriceStateToProps)(StockPrice);
+
+const store = createStore(reducer, {SAP: 104});
 
 // The second parameter is the container type that every
 // component instance should be rendered within.
@@ -130,7 +136,7 @@ const store = createStore(reducer, {age:42});
 // the store instance to be used for every Provider
 const exported = exportComponents(
     {
-        DisplayName: ConnectedNameAndAge
+        StockPrice: ConnectedStockPrice
     },
     Provider,
     {store}
@@ -138,10 +144,27 @@ const exported = exportComponents(
 
 // The exported components can be made available globally
 // for consumers to reference
-window.ExportedComponents = exported;
+window.StockTicker = exported;
 ```
 
-Consumers of exported components do not need to do anything differently when the components are wrapped in a container.
+Consumers of exported components do not need to do anything differently when the components are wrapped in a container.  But in this example, the consumer can now render a `StockPrice` using only the symbol and the price will be pulled from the store.
+
+``` html
+<!-- The DIV that the display name component will be rendered into -->
+<div id="stockprice-sap"></div>
+
+<script src="stockticker.js"></script>
+<script>
+
+    window.StockTicker.StockPrice.render(
+        {symbol: 'SAP'},
+        // Supply either an element or and element id string
+        // (for document.getElementById to be used by default)
+        document.getElementById('stockprice-sap')
+    );
+
+</script>
+```
 
 _Note that react-interop does not depend on redux or react-redux.  You can use any container element to wrap around exported components._
 
@@ -154,22 +177,21 @@ _Nothing is needed beyond `bindActionCreators` and a simple convention, so there
 ``` jsx
 // Run webpack over this entry point to produce a JS file
 // that provides the exported components via react-interop
-// For this example, output would be 'exported-components.js'
+// For this example, output would be 'stockticker.js'
 
+import {createStore} from 'redux';
 import {exportComponents} from 'react-interop';
-import PropTypes from 'prop-types';
 import React from 'react';
-import {Provider} from 'react-redux';
-import {bindActionCreators, createStore} from 'redux';
+import {connect, Provider} from 'react-redux';
 
 function reducer(state = {}, action) {
     switch (action.type) {
-        case 'SET_AGE':
-            const age = action.age;
+        case 'SET_STOCK_PRICE':
+            const {price, symbol} = action;
 
             return {
                 ...state,
-                age
+                [symbol]: price
             };
 
         default:
@@ -177,46 +199,56 @@ function reducer(state = {}, action) {
     }
 }
 
-function setAge(age) {
+function setStockPrice(symbol, price) {
     return {
-        type: 'SET_AGE',
-        age
+        type: 'SET_STOCK_PRICE',
+        symbol,
+        price
     };
 }
 
-// NameAndAge is a sample React component that we want to export
-const NameAndAge = ({age, name}) => (
+// StockPrice is a sample React component that we want to export
+// symbol comes from props, price come from state
+const StockPrice = ({symbol, price}) => (
     <div>
-        <div>Name: {name}</div>
-        <div>Age: {age}</div>
+        <strong>{symbol}</strong>: {price.toFixed(2)}
     </div>
 );
 
-NameAndAge.propTypes = {
-    age: PropTypes.number,
-    name: PropTypes.string
+StockPrice.propTypes = {
+    price: PropTypes.number.isRequired,
+    symbol: PropTypes.string.isRequired
 };
 
-const mapStateToProps = ({age}) => ({age});
-const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
+const mapStockPriceStateToProps = (state, {symbol}) => ({
+    symbol,
+    price: state[symbol]
+});
 
-const store = createStore(reducer, {age: 42});
+const ConnectedStockPrice = connect(mapStockPriceStateToProps)(StockPrice);
 
-// Generate the exported components
-const exportedComponents = exportComponents(
+const store = createStore(reducer, {SAP: 104});
+
+// The second parameter is the container type that every
+// component instance should be rendered within.
+// The third parameter is an object that represents the
+// props to provide to the container elements themselves
+// In this example, we supply react-redux Provider and
+// the store instance to be used for every Provider
+const exported = exportComponents(
     {
-        DisplayName: ConnectedNameAndAge
+        StockPrice: ConnectedStockPrice
     },
     Provider,
     {store}
 );
 
 // Use bindActionCreators to be ready to export the action creators
-const exportedActions = bindActionCreators({setAge}, store.dispatch);
+const exportedActions = bindActionCreators({setStockPrice}, store.dispatch);
 
 // The exported components and actions can be made
 // available globally for consumers to reference
-window.ExportedComponents = {
+window.StockTicker = {
     ...exportedComponents,
     ...exportedActions
 };
@@ -225,18 +257,24 @@ window.ExportedComponents = {
 With this approach, consumers can now invoke vanilla JavaScript functions that will dispatch redux actions, update the store, and cause any exported components rendered through the `render` method to update.  Subsequent calls to `renderToStaticMarkup` will also respect store updates.
 
 ``` html
-<script src="exported-components.js"></script>
+<!-- The DIV that the display name component will be rendered into -->
+<div id="stockprice-sap"></div>
+
+<script src="stockticker.js"></script>
 <script>
 
-    var DisplayName = window.ExportedComponents.DisplayName;
+    window.StockTicker.StockPrice.render(
+        {symbol: 'SAP'},
+        // Supply either an element or and element id string
+        // (for document.getElementById to be used by default)
+        document.getElementById('stockprice-sap')
+    );
 
-    // This results in dispatching the setAge action creator
-    // and the store will be updated with {age: 34}
-    window.ExportedComponents.setAge(34);
-
-    var displayNameHtml = DisplayName.renderToStaticMarkup({
-        name: 'Via Interop'
-    });
+    // This results in dispatching the setStockPrice action
+    // and the store will be updated with {SAP: 105}.
+    // Because live rendering is used, the rendered stock
+    // price will automatically be re-rendered.
+    window.StockTicker.setStockPrice('SAP', 105);
 
 </script>
 ```
@@ -252,153 +290,177 @@ To fulfill this requirement, react-interop supplies a pub/sub model based on red
 ``` jsx
 // Run webpack over this entry point to produce a JS file
 // that provides the exported components via react-interop
+// For this example, output would be 'stockticker.js'
+
+// Run webpack over this entry point to produce a JS file
+// that provides the exported components via react-interop
 // For this example, output would be 'exported-components.js'
+
+/* eslint-disable react/no-multi-comp */
 
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect, Provider} from 'react-redux';
-import {createCallback, exportCallbacks, exportComponents} from 'react-interop';
-import {bindActionCreators, createStore} from 'redux';
+import {applyMiddleware, bindActionCreators, createStore} from 'redux';
+import {createCallback, exportCallbacks, exportComponents} from '../src';
+
+function applyFluctuation(stocks) {
+    const newStocks = {};
+
+    Object.keys(stocks).forEach((symbol) => {
+        // Apply a fluctuation of +/- 10%
+        const fluctuation = (Math.random() - 0.5) * 0.1;
+
+        newStocks[symbol] = stocks[symbol] + (stocks[symbol] * fluctuation);
+    });
+
+    return newStocks;
+}
 
 function reducer(state = {}, action) {
     switch (action.type) {
-        case 'SET_AGE':
-            const age = action.age;
+        case 'SET_STOCK_PRICE':
+            const {price, symbol} = action;
 
             return {
                 ...state,
-                age
+                [symbol]: price
             };
 
-        case 'INCREMENT_AGE':
-            const {age} = state;
-
-            return {
-                ...state,
-                age: (age + 1)
-            };
+        case 'FLUCTUATE_STOCKS':
+            return applyFluctuation(state);
 
         default:
             return state;
     }
 }
 
-function setAge(age) {
+function setStockPrice(symbol, price) {
     return {
-        type: 'SET_AGE',
-        age
+        type: 'SET_STOCK_PRICE',
+        symbol,
+        price
     };
 }
 
-function incrementAge() {
+function fluctuateStockPrices() {
     return {
-        type: 'INCREMENT_AGE'
+        type: 'FLUCTUATE_STOCKS'
     };
 }
 
-// NameAndAge is a sample React component that we want to export
-// name comes in through props, age will come from the store
-const NameAndAge = ({age, name}) => (
+// StockPrice is a sample React component that we want to export
+// symbol comes from props, price come from state
+const StockPrice = ({symbol, price}) => (
     <div>
-        <div>Name: {name}</div>
-        <div>Age: {age}</div>
+        <strong>{symbol}</strong>: {price.toFixed(2)}
     </div>
 );
 
-NameAndAge.propTypes = {
-    age: PropTypes.number,
-    name: PropTypes.string
+StockPrice.propTypes = {
+    price: PropTypes.number.isRequired,
+    symbol: PropTypes.string.isRequired
 };
 
-const mapStateToProps = ({age}) => ({age});
-const ConnectedNameAndAge = connect(mapStateToProps)(NameAndAge);
+const mapStockPriceStateToProps = (state, {symbol}) => ({
+    symbol,
+    price: state[symbol]
+});
+
+const ConnectedStockPrice = connect(mapStockPriceStateToProps)(StockPrice);
 
 // Create a callback pub/sub instance
-const onAgeChanged = createCallback();
+const onPriceChanged = createCallback();
 
-// Using redux middleware, watch for the age value to change
-// and dispatch out to any subscribers that the age was updated
-const ageNotificationMiddleware = store => next => action => {
-    const {age: oldAge} = store.getState();
+// Using redux middleware, watch for price changes
+// and dispatch out to any subscribers that a price was changed
+const priceChangeMiddleware = store => next => action => {
+    const oldPrices = store.getState();
 
     next(action);
 
-    const {age: newAge} = store.getState();
+    const newPrices = store.getState();
 
-    if (oldAge !== newAge) {
-        onAgeChanged.dispatch(newAge);
-    }
+    Object.keys(newPrices).forEach((symbol) => {
+        if (newPrices[symbol] !== oldPrices[symbol]) {
+            onPriceChanged.dispatch({
+                symbol,
+                price: newPrices[symbol]
+            });
+        }
+    });
 };
 
-const store = createStore(reducer, {age: 42}, [ageNotificationMiddleware]);
+const store = createStore(
+    reducer,
+    {
+        SAP: 104
+    },
+    applyMiddleware(priceChangeMiddleware)
+);
 
-// Every 10 seconds, increment the age by a year
-function dispatchIncrementAge() {
-    store.dispatch(incrementAge());
+// Fluctuate stock prices every second
+function dispatchFluctuation() {
+    store.dispatch(fluctuateStockPrices());
 }
 
-window.setInterval(dispatchIncrementAge, 10000);
+window.setInterval(dispatchFluctuation, 10000);
 
 // Generate the exported components
 const exportedComponents = exportComponents(
     {
-        DisplayName: ConnectedNameAndAge
+        StockPrice: ConnectedStockPrice
     },
     Provider,
     {store}
 );
 
 // Use bindActionCreators to be ready to export the action creators
-const exportedActions = bindActionCreators({setAge}, store.dispatch);
+const exportedActions = bindActionCreators({setStockPrice}, store.dispatch);
 
 // Generate the exported callbacks
-const exportedCallbacks = exportCallbacks({onAgeChanged});
+const exportedCallbacks = exportCallbacks({onPriceChanged});
 
 // The exported components, actions, and callbacks can
 // be made available globally for consumers to reference
-window.ExportedComponents = {
+window.StockTicker = {
     ...exportedComponents,
     ...exportedActions,
     ...exportedCallbacks
 };
 ```
 
-With the `onAgeChanged` callback exported, consumers can now subscribe to the callback and receive the callback parameters.
+With the `onPriceChanged` callback exported, consumers can now subscribe and receive the callback parameters.
 
 ``` html
-<script src="exported-components.js"></script>
+<!-- The DIV that the display name component will be rendered into -->
+<div id="stockprice-sap"></div>
+
+<script src="stockticker.js"></script>
 <script>
 
-    var DisplayName = window.ExportedComponents.DisplayName;
+    function renderSAPStockPrice() {
+        var markup = window.StockTicker.StockPrice.renderToStaticMarkup(
+            {symbol: 'SAP'}
+        );
 
-    // This results in dispatching the setAge action creator
-    // and the store will be updated with {age: 34}
-    window.ExportedComponents.setAge(34);
-
-    // The page is being rendered by building HTML as strings
-    // and the renderToStaticMarkup function is used. This
-    // needs to be called again each time the page is rendered.
-    function renderPage() {
-        var displayNameHtml = DisplayName.renderToStaticMarkup({
-            name: 'Via Interop'
-        });
-
-        // ...
+        document.getElementById('stockprice-sap').innerHTML = markup;
     }
 
-    renderPage();
+    // When the StockTicker notifies that a price has changed,
+    // log a status message and re-render the SAP stock price
+    // if it was the price that changed
+    function notifyOnStockChange(stock) {
+        console.log('A stock price changed', stock.symbol, stock.price);
 
-    // When the ExportedComponents notify that the age has changed,
-    // display a status and render the page again.
-    function notifyOnAgeChange(age) {
-        window.status = 'The age has changed to ' + age;
-        renderPage();
+        if (stock.symbol === 'SAP') {
+            renderSAPStockPrice();
+        }
     }
 
-    var onAgeChanged = window.ExportedComponents.onAgeChanged;
+    renderSAPStockPrice();
 
-    // The callback function returns the unsubscribe function
-    var unsubscribeAgeChanged = onAgeChanged(notifyOnAgeChange);
+    window.StockTicker.onPriceChanged(notifyOnStockChange);
 
 </script>
 ```
