@@ -435,7 +435,6 @@ The two rendering scenarios are:
 
 react-interop prescribes the use of redux's `bindActionCreators` (or analogous methods from other flux implementations) to expose functions for invoking actions without the consuming being aware of the flux implementation.
 
-The exported API can use `createCallback` and `exportCallbacks`,allowing consumers to subscribe to callbacks.
+Using `exportCallbacks` (along with `createCallback`), consumers subscribe to events and receive vanilla JavaScript callbacks with parameters.
 
 To provide your components to the consumer, create a webpack entry point that constructs your store and exports your components, actions, and callbacks.  Your consumers will reference your bundle as a vanilla JavaScript file.
-
