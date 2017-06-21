@@ -1,6 +1,6 @@
 // Run webpack over this entry point to produce a JS file
 // that provides the exported components via react-interop
-// For this example, output would be 'exported-components.js'
+// For this example, output will be 'stockticker-packed.js'
 
 /* eslint-disable react/no-multi-comp */
 
