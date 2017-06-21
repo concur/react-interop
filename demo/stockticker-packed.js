@@ -11303,27 +11303,37 @@ function isPlainObject(value) {
 
 
 Object.defineProperty(exports, "__esModule", {
-    value: true
+  value: true
 });
-exports.exportComponents = exports.exportCallbacks = exports.createCallback = undefined;
 
 var _createCallback = __webpack_require__(113);
 
-var _createCallback2 = _interopRequireDefault(_createCallback);
+Object.defineProperty(exports, 'createCallback', {
+  enumerable: true,
+  get: function get() {
+    return _interopRequireDefault(_createCallback).default;
+  }
+});
 
 var _exportCallbacks = __webpack_require__(114);
 
-var _exportCallbacks2 = _interopRequireDefault(_exportCallbacks);
+Object.defineProperty(exports, 'exportCallbacks', {
+  enumerable: true,
+  get: function get() {
+    return _interopRequireDefault(_exportCallbacks).default;
+  }
+});
 
 var _exportComponents = __webpack_require__(115);
 
-var _exportComponents2 = _interopRequireDefault(_exportComponents);
+Object.defineProperty(exports, 'exportComponents', {
+  enumerable: true,
+  get: function get() {
+    return _interopRequireDefault(_exportComponents).default;
+  }
+});
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.createCallback = _createCallback2.default;
-exports.exportCallbacks = _exportCallbacks2.default;
-exports.exportComponents = _exportComponents2.default;
 
 /***/ }),
 /* 111 */
@@ -11508,12 +11518,12 @@ var store = (0, _redux.createStore)(reducer, {
     SAP: 104
 }, (0, _redux.applyMiddleware)(priceChangeMiddleware));
 
-// Fluctuate stock prices every second
+// Fluctuate stock prices every 5 seconds
 function dispatchFluctuation() {
     store.dispatch(fluctuateStockPrices());
 }
 
-window.setInterval(dispatchFluctuation, 10000);
+window.setInterval(dispatchFluctuation, 5000);
 
 // Generate the exported components
 var exportedComponents = (0, _src.exportComponents)({

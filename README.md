@@ -7,6 +7,17 @@ Are you delivering a component for someone else to render in their application? 
 
 react-interop enables these scenarios by delivering your components in an API that can be used by virtually any other JavaScript framework.
 
+## Demo
+
+This repository includes a basic Stock Ticker style demo.  To run the demo:
+
+``` jsx
+npm install
+npm run demo
+```
+
+This demo will open a static HTML page demonstrates embedding exported components in a consuming application. This is a vanilla HTML page that consumes components exported through react-interop.
+
 ## Exporting Components
 
 Exporting React components through react-interop makes them available for legacy or third-party integration.  To export them, create a webpack entry point to produce a JavaScript bundle to be referenced by the consumer (legacy or third-party).  The entry point will have code like the following.
