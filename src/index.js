@@ -1,9 +1,3 @@
-import createCallback from './createCallback';
-import exportCallbacks from './exportCallbacks';
-import exportComponents from './exportComponents';
-
-export {
-    createCallback,
-    exportCallbacks,
-    exportComponents
-};
+export {default as createCallback} from './createCallback';
+export {default as exportCallbacks} from './exportCallbacks';
+export {default as exportComponents} from './exportComponents';
