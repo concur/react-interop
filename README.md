@@ -11,7 +11,7 @@ react-interop enables these scenarios by delivering your components in an API th
 
 This repository includes a basic Stock Ticker style demo.  To run the demo:
 
-``` jsx
+``` sh
 npm install
 npm run demo
 ```
