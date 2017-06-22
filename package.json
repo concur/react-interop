@@ -1,7 +1,8 @@
 {
   "name": "react-interop",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Interop layer for consuming React components with other JavaScript libraries",
+  "files": ["lib"],
   "main": "lib/index.js",
   "scripts": {
     "build": "babel src --out-dir lib",
