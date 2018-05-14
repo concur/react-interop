@@ -7,11 +7,14 @@
   ],
   "main": "lib/index.js",
   "scripts": {
+    "clean": "npm run clean:build && npm run clean:demo",
     "build": "babel src --out-dir lib",
-    "clean": "rm -rf lib && rm ./demo/*-packed.js",
+    "clean:build": "rm -rf lib",
     "demo": "webpack --config ./demo/webpack.config.babel.js && open ./demo/consuming-application.html",
+    "clean:demo": "rm ./demo/*-packed.js || true",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest",
+    "release": "npm run clean && npm run build && standard-version"
   },
   "repository": {
     "type": "git",
@@ -50,6 +53,7 @@
     "prop-types": "^15.5.10",
     "react-redux": "^5.0.5",
     "redux": "^3.6.0",
+    "standard-version": "^4.3.0",
     "webpack": "^2.6.1"
   }
 }
